@@ -1,4 +1,1 @@
-telethon==1.33.1
 python-telegram-bot==20.3
-requests
-aiohttp
