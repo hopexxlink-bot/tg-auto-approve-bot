@@ -1,30 +1,43 @@
-from telegram.ext import Application, CommandHandler, ChatMemberHandler
+from telegram import Update
+from telegram.ext import Application, CommandHandler, ChatJoinRequestHandler, ContextTypes
+import os
 
-# /start কমান্ডের জন্য ফাংশন
-async def start(update, context):
-    await update.message.reply_text("✅ হ্যালো! বট এখন চালু আছে।")
+# Bot Token (Render এ Environment Variable থেকে নেবে)
+TOKEN = os.environ.get("8267045848:AAHzQaA_Xw3JhUbpvIey1OX7F8s92SIHWjo")
 
-# যখন নতুন মেম্বার গ্রুপে জয়েন করবে
-async def approve_member(update, context):
-    member = update.chat_member
-    if member.new_chat_member.status == "member":  # নতুন ইউজার এলো
-        try:
-            await context.bot.approve_chat_join_request(update.chat_member.chat.id, member.new_chat_member.user.id)
-            print(f"✅ Auto approved: {member.new_chat_member.user.first_name}")
-        except Exception as e:
-            print(f"⚠️ Error approving: {e}")
+# /start কমান্ড
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("✅ Bot চালু আছে! আমাকে Group/Channel-এ Admin করে দাও।")
 
-# তোমার Bot Token
-TOKEN = "8267045848:AAFx5FQhCirhZtypTFs_oVjzLyJ3QlUQm14"
+# Auto approve + Welcome message
+async def approve(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat_request = update.chat_join_request
+    user = chat_request.from_user
 
-# Application তৈরি
-app = Application.builder().token(TOKEN).build()
+    # Auto approve
+    await chat_request.approve()
 
-# /start কমান্ড হ্যান্ডলার
-app.add_handler(CommandHandler("start", start))
+    # Welcome message পাঠানো
+    try:
+        await context.bot.send_message(
+            chat_id=chat_request.chat.id,
+            text=f"🎉 স্বাগতম {user.first_name}!\nতুমি সফলভাবে গ্রুপ/চ্যানেলে যোগ হয়েছো।"
+        )
+    except Exception as e:
+        print("Error sending welcome:", e)
 
-# Auto Approve হ্যান্ডলার
-app.add_handler(ChatMemberHandler(approve_member, ChatMemberHandler.CHAT_MEMBER))
+# Main Function
+def main():
+    app = Application.builder().token(TOKEN).build()
 
-print("🚀 Bot চালু হচ্ছে...")
-app.run_polling()
+    # Command handler
+    app.add_handler(CommandHandler("start", start))
+
+    # Join request handler
+    app.add_handler(ChatJoinRequestHandler(approve))
+
+    print("🤖 Bot চালু হচ্ছে...")
+    app.run_polling()
+
+if __name__ == "__main__":
+    main()
