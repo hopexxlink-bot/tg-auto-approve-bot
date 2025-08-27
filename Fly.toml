@@ -1,0 +1,7 @@
+app = "tg-auto-approve-bot"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  PYTHONUNBUFFERED = "1"
